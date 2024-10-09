@@ -29,6 +29,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sigstore/scaffolding/pkg/secret"
+	"github.com/sigstore/sigstore/pkg/cryptoutils"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"knative.dev/pkg/logging"
@@ -139,32 +140,37 @@ func createAll() ([]byte, []byte, []byte, string, error) {
 	)
 
 	// Encode private key to PKCS#1 ASN.1 PEM.
-	block := &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(key),
-	}
+	// block := &pem.Block{
+	// 	Type:  "RSA PRIVATE KEY",
+	// 	Bytes: x509.MarshalPKCS1PrivateKey(key),
+	// }
 
 	// Generate a uuid as a password
 	u := uuid.New()
 	pwd := u.String()
 
 	// Encrypt the pem
-	block, err = x509.EncryptPEMBlock(rand.Reader, block.Type, block.Bytes, []byte(pwd), x509.PEMCipherAES256) // nolint
+	privPEM, pubPEM, err := cryptoutils.GeneratePEMEncodedRSAKeyPair(4096, cryptoutils.StaticPasswordFunc([]byte("random")))
 	if err != nil {
-		return nil, nil, nil, "", fmt.Errorf("EncryptPEMBlock failed: %w", err)
+		return nil, nil, nil, "", fmt.Errorf("GeneratePEMEncodedRSAKeyPair failed: %w", err)
 	}
 
-	privPEM := pem.EncodeToMemory(block)
+	// block, err = x509.EncryptPEMBlock(rand.Reader, block.Type, block.Bytes, []byte(pwd), x509.PEMCipherAES256) // nolint
+	// if err != nil {
+	// 	return nil, nil, nil, "", fmt.Errorf("EncryptPEMBlock failed: %w", err)
+	// }
+
+	// privPEM := pem.EncodeToMemory(block)
 	if privPEM == nil {
-		return nil, nil, nil, "", fmt.Errorf("EncodeToMemory private key failed: %w", err)
+		return nil, nil, nil, "", fmt.Errorf(" private key failed: %w", err)
 	}
 	// Encode public key to PKCS#1 ASN.1 PEM.
-	pubPEM := pem.EncodeToMemory(
-		&pem.Block{
-			Type:  "RSA PUBLIC KEY",
-			Bytes: x509.MarshalPKCS1PublicKey(pub.(*rsa.PublicKey)),
-		},
-	)
+	// pubPEM := pem.EncodeToMemory(
+	// 	&pem.Block{
+	// 		Type:  "RSA PUBLIC KEY",
+	// 		Bytes: x509.MarshalPKCS1PublicKey(pub.(*rsa.PublicKey)),
+	// 	},
+	// )
 	if pubPEM == nil {
 		return nil, nil, nil, "", fmt.Errorf("EncodeToMemory public key failed: %w", err)
 	}

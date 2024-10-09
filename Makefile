@@ -3,7 +3,7 @@ GIT_HASH ?= $(shell git rev-parse HEAD)
 
 LDFLAGS=-buildid= -X sigs.k8s.io/release-utils/version.gitVersion=$(GIT_TAG) -X sigs.k8s.io/release-utils/version.gitCommit=$(GIT_HASH)
 
-KO_DOCKER_REPO ?= ghcr.io/sigstore/scaffolding
+KO_DOCKER_REPO ?= gcr.io/priya-cg/ko
 
 TRILLIAN_VERSION=$(shell go list -m -f '{{ .Version }}' github.com/google/trillian)
 
